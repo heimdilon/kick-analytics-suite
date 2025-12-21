@@ -2,6 +2,8 @@
 
 This folder contains two programs that monitor Kick chat activity and viewer counts.
 
+Vibe coded with Codex.
+
 - kick_live_cli.py: a Python CLI that logs live stats and messages to JSONL, with optional screenshots via ffmpeg.
 - kick-live-analytics.html: a standalone web dashboard for live charts, chat feed, exports, and in-browser screenshots.
 
