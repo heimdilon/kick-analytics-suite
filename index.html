@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kick Live View + Chat Pulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1216;
+      --bg-soft: #141a1f;
+      --card: #181f26;
+      --card-strong: #1d2630;
+      --text: #e9eef4;
+      --muted: #9fb0c0;
+      --accent: #59f3a2;
+      --accent-2: #4fd1c5;
+      --warning: #ffb547;
+      --danger: #ff6b6b;
+      --shadow: rgba(10, 16, 22, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      background: radial-gradient(1100px 600px at 10% -10%, rgba(89, 243, 162, 0.12), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(79, 209, 197, 0.16), transparent 55%),
+        linear-gradient(160deg, #0c0f13 0%, #0f1216 55%, #111821 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 36px);
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(89, 243, 162, 0.12);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 12px 30px var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card strong {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .value.small {
+      font-size: 20px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--bg-soft);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    input::placeholder {
+      color: rgba(159, 176, 192, 0.6);
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: #0a1611;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(89, 243, 162, 0.25); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .ghost {
+      background: #26313c;
+      color: var(--text);
+    }
+
+    .ghost:hover {
+      box-shadow: 0 8px 16px rgba(38, 49, 60, 0.35);
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--card-strong);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .status .tag {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f1216;
+      background: var(--warning);
+    }
+
+    .status.connected .tag { background: var(--accent); }
+    .status.error .tag { background: var(--danger); color: #fff; }
+
+    .chart-grid {
+      margin-top: 18px;
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .chart-meta {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chart-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    canvas {
+      width: 100%;
+      height: 160px;
+      border-radius: 12px;
+      background: rgba(10, 14, 20, 0.5);
+    }
+
+    .chat {
+      background: rgba(13, 18, 24, 0.7);
+      border-radius: 16px;
+      padding: 16px;
+      height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chat-line {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 14px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #2a3542;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .chat-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chat-user {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .helper {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .advanced { margin-top: 12px; }
+
+    .chart-card button { margin-top: 8px; }
+
+    .screenshot-preview {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 14, 20, 0.5);
+    }
+
+    .top-list {
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--text);
+    }
+
+    @media (max-width: 720px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .chat { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-wrap">
+        <h1>Kick Live View + Chat Pulse</h1>
+        <p class="subtitle">Track live viewer count (if available) and unique chatters per second/minute.</p>
+      </div>
+      <div class="pill"><span class="dot"></span><span id="sessionStatus">Ready</span></div>
+    </header>
+
+    <section class="card">
+      <div class="controls">
+        <div>
+          <label for="channelInput">Kick channel</label>
+          <input id="channelInput" placeholder="xqc" autocomplete="off" />
+        </div>
+        <div>
+          <label for="proxyInput">Optional proxy (for CORS)</label>
+          <input id="proxyInput" placeholder="http://localhost:3456" autocomplete="off" />
+        </div>
+        <div>
+          <label for="manualChatroom">Chatroom ID (optional)</label>
+          <input id="manualChatroom" placeholder="e.g. 668" autocomplete="off" />
+        </div>
+        <div>
+          <label for="windowSelect">Chart window</label>
+          <select id="windowSelect">
+            <option value="60">Last 60s</option>
+            <option value="300">Last 5 min</option>
+            <option value="900">Last 15 min</option>
+            <option value="3600">Last 1 hour</option>
+            <option value="all">All stream</option>
+          </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+          <button id="connectBtn">Connect</button>
+        </div>
+      </div>
+      <div class="controls advanced">
+        <div>
+          <label for="durationInput">Auto stop after (sec)</label>
+          <input id="durationInput" type="number" min="1" placeholder="e.g. 3600" />
+        </div>
+        <div>
+          <label for="inactivityInput">Stop after inactivity (sec)</label>
+          <input id="inactivityInput" type="number" min="1" placeholder="e.g. 300" />
+        </div>
+        <div>
+          <label for="streamUrlInput">Stream URL (m3u8)</label>
+          <input id="streamUrlInput" placeholder="https://...m3u8" autocomplete="off" />
+        </div>
+        <div>
+          <label for="screenshotIntervalInput">Screenshot interval (sec)</label>
+          <input id="screenshotIntervalInput" type="number" min="1" placeholder="e.g. 30" />
+        </div>
+        <div>
+          <label for="screenshotOnSnapshot">Screenshot on each snapshot</label>
+          <select id="screenshotOnSnapshot">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </div>
+        <div>
+          <label for="screenshotMaxInput">Max screenshots to keep</label>
+          <input id="screenshotMaxInput" type="number" min="1" placeholder="e.g. 100" />
+        </div>
+        <div>
+          <label for="screenshotFormatSelect">Screenshot format</label>
+          <select id="screenshotFormatSelect">
+            <option value="jpg">JPG</option>
+            <option value="png">PNG</option>
+          </select>
+        </div>
+        <div>
+          <label for="screenshotEmbedSelect">Embed thumbnail in JSONL</label>
+          <select id="screenshotEmbedSelect">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </div>
+        <div>
+          <label for="screenshotEmbedWidth">Embed width (px)</label>
+          <input id="screenshotEmbedWidth" type="number" min="1" placeholder="160" />
+        </div>
+      </div>
+      <p class="helper" id="screenshotHelp">
+        Screenshots need a playable m3u8 stream URL and browser HLS support; CORS can block capture.
+      </p>
+      <div class="action-row">
+        <button id="clearBtn" class="ghost">Clear Data</button>
+        <button id="exportBtn" class="ghost">Export Session CSV</button>
+        <button id="exportMessagesBtn" class="ghost">Export Messages CSV</button>
+        <button id="exportJsonlBtn" class="ghost">Export Session JSONL</button>
+      </div>
+      <div class="status" id="statusBar">
+        <span id="statusText">Waiting for a channel...</span>
+        <span class="tag" id="statusTag">Idle</span>
+      </div>
+      <p class="helper">
+        Viewer count depends on Kick API access. If you see "Unavailable", run the local proxy in `kick-chat-analytics/server.py` and set it above.
+      </p>
+    </section>
+
+    <section class="grid" style="margin-top:18px;">
+      <div class="card">
+        <strong>Live Viewers</strong>
+        <div class="value" id="viewerCount">Unavailable</div>
+      </div>
+      <div class="card">
+        <strong>Messages / Minute</strong>
+        <div class="value" id="messagesPerMinute">0</div>
+      </div>
+      <div class="card">
+        <strong>Messages / Second</strong>
+        <div class="value" id="messagesPerSecond">0.0</div>
+      </div>
+      <div class="card">
+        <strong>Unique Chatters / Minute</strong>
+        <div class="value" id="uniquePerMinute">0</div>
+      </div>
+      <div class="card">
+        <strong>Unique Chatters / Second</strong>
+        <div class="value" id="uniquePerSecond">0</div>
+      </div>
+      <div class="card">
+        <strong>Total Unique Chatters</strong>
+        <div class="value" id="uniqueTotal">0</div>
+      </div>
+      <div class="card">
+        <strong>Total Messages</strong>
+        <div class="value" id="totalMessages">0</div>
+      </div>
+      <div class="card">
+        <strong>Top Chatters</strong>
+        <div class="value small top-list" id="topChatters">n/a</div>
+      </div>
+    </section>
+
+    <section class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Messages / Minute</div>
+        <div class="chart-meta">
+          <span class="chart-value" id="chartMessagesValue">0</span>
+          <span id="chartMessagesWindow">Last 60s</span>
+        </div>
+        <canvas id="chartMessages"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Unique Chatters / Minute</div>
+        <div class="chart-meta">
+          <span class="chart-value" id="chartUniqueValue">0</span>
+          <span id="chartUniqueWindow">Last 60s</span>
+        </div>
+        <canvas id="chartUnique"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Live Viewers (poll)</div>
+        <div class="chart-meta">
+          <span class="chart-value" id="chartViewersValue">Unavailable</span>
+          <span id="chartViewersWindow">Last 60s</span>
+        </div>
+        <canvas id="chartViewers"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Latest Screenshot</div>
+        <div class="chart-meta">
+          <span class="chart-value" id="screenshotCount">0</span>
+          <span id="screenshotStatus">Off</span>
+        </div>
+        <img id="screenshotPreview" class="screenshot-preview" alt="Latest screenshot" />
+        <button id="downloadScreenshotBtn" class="ghost" disabled>Download Screenshot</button>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <strong>Recent Chat</strong>
+      <div class="chat" id="chatContainer">
+        <div class="helper">Messages will appear here once connected.</div>
+      </div>
+    </section>
+  </div>
+
+  <video id="streamVideo" style="display:none;" muted playsinline></video>
+  <canvas id="captureCanvas" style="display:none;"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
+  <script>
+    const els = {
+      channelInput: document.getElementById("channelInput"),
+      proxyInput: document.getElementById("proxyInput"),
+      manualChatroom: document.getElementById("manualChatroom"),
+      windowSelect: document.getElementById("windowSelect"),
+      connectBtn: document.getElementById("connectBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      exportMessagesBtn: document.getElementById("exportMessagesBtn"),
+      exportJsonlBtn: document.getElementById("exportJsonlBtn"),
+      statusBar: document.getElementById("statusBar"),
+      statusText: document.getElementById("statusText"),
+      statusTag: document.getElementById("statusTag"),
+      sessionStatus: document.getElementById("sessionStatus"),
+      viewerCount: document.getElementById("viewerCount"),
+      messagesPerMinute: document.getElementById("messagesPerMinute"),
+      messagesPerSecond: document.getElementById("messagesPerSecond"),
+      uniquePerMinute: document.getElementById("uniquePerMinute"),
+      uniquePerSecond: document.getElementById("uniquePerSecond"),
+      uniqueTotal: document.getElementById("uniqueTotal"),
+      totalMessages: document.getElementById("totalMessages"),
+      topChatters: document.getElementById("topChatters"),
+      chatContainer: document.getElementById("chatContainer"),
+      chartMessages: document.getElementById("chartMessages"),
+      chartUnique: document.getElementById("chartUnique"),
+      chartViewers: document.getElementById("chartViewers"),
+      chartMessagesValue: document.getElementById("chartMessagesValue"),
+      chartUniqueValue: document.getElementById("chartUniqueValue"),
+      chartViewersValue: document.getElementById("chartViewersValue"),
+      chartMessagesWindow: document.getElementById("chartMessagesWindow"),
+      chartUniqueWindow: document.getElementById("chartUniqueWindow"),
+      chartViewersWindow: document.getElementById("chartViewersWindow"),
+      durationInput: document.getElementById("durationInput"),
+      inactivityInput: document.getElementById("inactivityInput"),
+      streamUrlInput: document.getElementById("streamUrlInput"),
+      screenshotIntervalInput: document.getElementById("screenshotIntervalInput"),
+      screenshotOnSnapshot: document.getElementById("screenshotOnSnapshot"),
+      screenshotMaxInput: document.getElementById("screenshotMaxInput"),
+      screenshotFormatSelect: document.getElementById("screenshotFormatSelect"),
+      screenshotEmbedSelect: document.getElementById("screenshotEmbedSelect"),
+      screenshotEmbedWidth: document.getElementById("screenshotEmbedWidth"),
+      screenshotPreview: document.getElementById("screenshotPreview"),
+      screenshotCount: document.getElementById("screenshotCount"),
+      screenshotStatus: document.getElementById("screenshotStatus"),
+      screenshotHelp: document.getElementById("screenshotHelp"),
+      downloadScreenshotBtn: document.getElementById("downloadScreenshotBtn"),
+      streamVideo: document.getElementById("streamVideo"),
+      captureCanvas: document.getElementById("captureCanvas")
+    };
+
+    const state = {
+      socket: null,
+      isConnected: false,
+      channelName: "",
+      chatroomId: null,
+      totalMessages: 0,
+      uniqueUsers: new Set(),
+      userCounts: {},
+      events: [],
+      series: { messages: [], unique: [], viewers: [] },
+      snapshots: [],
+      messageLog: [],
+      sessionLog: [],
+      currentViewer: null,
+      chartWindowSeconds: 60,
+      maxSeriesLength: 3600,
+      maxSnapshotLength: 7200,
+      maxSessionLogLength: 20000,
+      viewerInterval: null,
+      maxChatLines: 60,
+      charts: {},
+      startTime: null,
+      lastMessageTime: null,
+      durationSeconds: null,
+      inactivitySeconds: null,
+      screenshot: {
+        interval: null,
+        onSnapshot: false,
+        max: null,
+        format: "jpg",
+        embed: false,
+        embedWidth: 160,
+        streamUrl: "",
+        hls: null,
+        timer: null,
+        latestDataUrl: null,
+        latestBase64: null,
+        history: [],
+        inProgress: false
+      }
+    };
+
+    function setStatus(text, tag, mode) {
+      els.statusText.textContent = text;
+      els.statusTag.textContent = tag;
+      els.statusBar.className = "status" + (mode ? " " + mode : "");
+      els.sessionStatus.textContent = tag;
+    }
+
+    function setButtonState(loading) {
+      els.connectBtn.disabled = loading;
+      els.connectBtn.textContent = loading ? "Connecting..." : (state.isConnected ? "Disconnect" : "Connect");
+    }
+
+    function sanitize(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function csvEscape(value) {
+      if (value === null || value === undefined) return "";
+      const text = String(value);
+      if (/[",\n]/.test(text)) {
+        return "\"" + text.replace(/"/g, "\"\"") + "\"";
+      }
+      return text;
+    }
+
+    function parsePositiveInt(value) {
+      const num = Number(value);
+      if (!Number.isFinite(num) || num <= 0) return null;
+      return Math.floor(num);
+    }
+
+    function recordSession(entry) {
+      state.sessionLog.push(entry);
+      if (state.sessionLog.length > state.maxSessionLogLength) {
+        state.sessionLog.shift();
+      }
+    }
+
+    function updateTopChatters() {
+      const entries = Object.entries(state.userCounts);
+      if (!entries.length) {
+        els.topChatters.textContent = "n/a";
+        return;
+      }
+      entries.sort((a, b) => b[1] - a[1]);
+      const top = entries.slice(0, 3).map(([name, count]) => name + " (" + count + ")");
+      els.topChatters.textContent = top.join(", ");
+    }
+
+    function updateScreenshotUI() {
+      if (state.screenshot.latestDataUrl) {
+        els.screenshotPreview.src = state.screenshot.latestDataUrl;
+        els.screenshotPreview.style.display = "block";
+        els.downloadScreenshotBtn.disabled = false;
+      } else {
+        els.screenshotPreview.removeAttribute("src");
+        els.screenshotPreview.style.display = "none";
+        els.downloadScreenshotBtn.disabled = true;
+      }
+      els.screenshotCount.textContent = String(state.screenshot.history.length);
+      if (state.screenshot.interval) {
+        els.screenshotStatus.textContent = "Every " + state.screenshot.interval + "s";
+      } else if (state.screenshot.onSnapshot) {
+        els.screenshotStatus.textContent = "On snapshot";
+      } else {
+        els.screenshotStatus.textContent = "Off";
+      }
+    }
+
+    function setScreenshotHelp(message) {
+      els.screenshotHelp.textContent = message || "";
+    }
+
+    function stopScreenshotCapture() {
+      if (state.screenshot.timer) clearInterval(state.screenshot.timer);
+      state.screenshot.timer = null;
+      if (state.screenshot.hls) {
+        state.screenshot.hls.destroy();
+        state.screenshot.hls = null;
+      }
+      if (els.streamVideo) {
+        els.streamVideo.pause();
+        els.streamVideo.removeAttribute("src");
+        els.streamVideo.load();
+      }
+    }
+
+    function setupStreamPlayback(streamUrl) {
+      const video = els.streamVideo;
+      if (!video || !streamUrl) return false;
+      if (state.screenshot.hls) {
+        state.screenshot.hls.destroy();
+        state.screenshot.hls = null;
+      }
+      video.crossOrigin = "anonymous";
+      video.muted = true;
+      video.playsInline = true;
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        state.screenshot.hls = hls;
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = streamUrl;
+      } else {
+        setScreenshotHelp("HLS is not supported in this browser. Try Chrome/Edge or provide a native HLS source.");
+        return false;
+      }
+      setScreenshotHelp("");
+      video.play().catch(() => {});
+      return true;
+    }
+
+    function captureOnce() {
+      if (state.screenshot.inProgress) return;
+      const video = els.streamVideo;
+      if (!video || video.readyState < 2) return;
+      state.screenshot.inProgress = true;
+      try {
+        const canvas = els.captureCanvas;
+        const ctx = canvas.getContext("2d");
+        const sourceWidth = video.videoWidth || 1280;
+        const sourceHeight = video.videoHeight || 720;
+        const targetHeight = 480;
+        const scale = targetHeight / sourceHeight;
+        const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+        const mime = state.screenshot.format === "png" ? "image/png" : "image/jpeg";
+        const dataUrl = canvas.toDataURL(mime, 0.85);
+        state.screenshot.latestDataUrl = dataUrl;
+        state.screenshot.history.push(dataUrl);
+        if (state.screenshot.max && state.screenshot.history.length > state.screenshot.max) {
+          state.screenshot.history.shift();
+        }
+
+        if (state.screenshot.embed) {
+          const embedCanvas = document.createElement("canvas");
+          const embedWidth = state.screenshot.embedWidth || 160;
+          const embedScale = embedWidth / sourceWidth;
+          const embedHeight = Math.max(1, Math.round(sourceHeight * embedScale));
+          embedCanvas.width = embedWidth;
+          embedCanvas.height = embedHeight;
+          const embedCtx = embedCanvas.getContext("2d");
+          embedCtx.drawImage(video, 0, 0, embedWidth, embedHeight);
+          const embedData = embedCanvas.toDataURL(mime, 0.85);
+          state.screenshot.latestBase64 = embedData.split(",")[1] || null;
+        } else {
+          state.screenshot.latestBase64 = null;
+        }
+        updateScreenshotUI();
+      } catch (err) {
+        setStatus("Screenshot blocked by CORS", "Error", "error");
+        setScreenshotHelp("Capture blocked by CORS. Try a proxy or a different stream URL.");
+      } finally {
+        state.screenshot.inProgress = false;
+      }
+    }
+
+    function startScreenshotCapture() {
+      stopScreenshotCapture();
+      if (!state.screenshot.interval && !state.screenshot.onSnapshot) {
+        updateScreenshotUI();
+        return true;
+      }
+      const ok = setupStreamPlayback(state.screenshot.streamUrl);
+      if (!ok) {
+        if (!els.screenshotHelp.textContent) {
+          setScreenshotHelp("Stream URL not playable for screenshots.");
+        }
+        return false;
+      }
+      if (state.screenshot.interval) {
+        state.screenshot.timer = setInterval(captureOnce, state.screenshot.interval * 1000);
+      }
+      updateScreenshotUI();
+      return true;
+    }
+
+    function createChart(canvas, color) {
+      const ctx = canvas.getContext("2d");
+      const chart = {
+        ctx,
+        color,
+        data: []
+      };
+
+      function draw() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        canvas.width = width * devicePixelRatio;
+        canvas.height = height * devicePixelRatio;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(devicePixelRatio, devicePixelRatio);
+
+        ctx.clearRect(0, 0, width, height);
+
+        const data = chart.data.length ? chart.data : [0];
+        const max = Math.max(1, ...data);
+        const last = data[data.length - 1] ?? 0;
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+
+        data.forEach((val, idx) => {
+          const x = (idx / Math.max(1, data.length - 1)) * width;
+          const y = height - (val / max) * (height - 12) - 6;
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.fillRect(0, height - 1, width, 1);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.font = "10px Space Grotesk, sans-serif";
+        ctx.fillText(String(Math.round(max)), 6, 12);
+        ctx.fillText("0", 6, height - 6);
+        ctx.fillText(String(Math.round(last)), width - 28, 12);
+      }
+
+      function setData(values) {
+        chart.data = values;
+        draw();
+      }
+
+      draw();
+      return { setData, draw };
+    }
+
+    function setupCharts() {
+      state.charts.messages = createChart(els.chartMessages, "#59f3a2");
+      state.charts.unique = createChart(els.chartUnique, "#4fd1c5");
+      state.charts.viewers = createChart(els.chartViewers, "#ffb547");
+    }
+
+    function formatWindowLabel(windowValue) {
+      if (windowValue === "all") return "All stream";
+      const seconds = Number(windowValue);
+      if (seconds === 60) return "Last 60s";
+      if (seconds === 300) return "Last 5 min";
+      if (seconds === 900) return "Last 15 min";
+      return "Last 1 hour";
+    }
+
+    function setChartWindow(windowValue) {
+      state.chartWindowSeconds = windowValue;
+      const label = formatWindowLabel(windowValue);
+      els.chartMessagesWindow.textContent = label;
+      els.chartUniqueWindow.textContent = label;
+      els.chartViewersWindow.textContent = label;
+      updateChartsFromSeries();
+    }
+
+    function getWindowData(series, length) {
+      if (length === "all") {
+        return series.length ? series.slice() : [0];
+      }
+      const slice = series.slice(-length);
+      if (slice.length < length) {
+        return new Array(length - slice.length).fill(0).concat(slice);
+      }
+      return slice;
+    }
+
+    function updateChartsFromSeries() {
+      const length = state.chartWindowSeconds;
+      state.charts.messages.setData(getWindowData(state.series.messages, length));
+      state.charts.unique.setData(getWindowData(state.series.unique, length));
+      state.charts.viewers.setData(getWindowData(state.series.viewers, length));
+    }
+
+    function pushSeries(name, value) {
+      const arr = state.series[name];
+      arr.push(value);
+      if (arr.length > state.maxSeriesLength) arr.shift();
+    }
+
+    async function fetchChannelInfo(channel, proxyBase) {
+      const manual = els.manualChatroom.value.trim();
+      if (manual && /^\d+$/.test(manual)) {
+        return { chatroomId: Number(manual), viewerCount: null, streamUrl: null };
+      }
+
+      if (proxyBase) {
+        const base = proxyBase.replace(/\/$/, "");
+        const resp = await fetch(base + "/channel?name=" + encodeURIComponent(channel));
+        if (!resp.ok) throw new Error("Proxy did not return a chatroom id");
+        const data = await resp.json();
+        return { chatroomId: data.chatroomId, viewerCount: null, streamUrl: null };
+      }
+
+      const resp = await fetch("https://kick.com/api/v2/channels/" + encodeURIComponent(channel));
+      if (!resp.ok) throw new Error("Kick API not reachable (CORS?)");
+      const data = await resp.json();
+      const viewerCount = data?.livestream?.viewer_count ?? data?.livestream?.viewerCount ?? null;
+      const livestream = data?.livestream || {};
+      const streamUrl = livestream?.playback_url || livestream?.playbackUrl || livestream?.hls || data?.playback_url || data?.playbackUrl || null;
+      return { chatroomId: data?.chatroom?.id, viewerCount, streamUrl };
+    }
+
+    function startViewerPoll(channel, proxyBase) {
+      if (state.viewerInterval) clearInterval(state.viewerInterval);
+      if (proxyBase) {
+        els.viewerCount.textContent = "Unavailable";
+        state.currentViewer = null;
+        return;
+      }
+
+      state.viewerInterval = setInterval(async () => {
+        try {
+          const info = await fetchChannelInfo(channel, "");
+          updateViewerCount(info.viewerCount);
+        } catch (err) {
+          updateViewerCount(null);
+        }
+      }, 20000);
+    }
+
+    function updateViewerCount(viewerCount) {
+      if (viewerCount === null || typeof viewerCount === "undefined") {
+        els.viewerCount.textContent = "Unavailable";
+        els.chartViewersValue.textContent = "Unavailable";
+        state.currentViewer = null;
+        return;
+      }
+      const value = Number(viewerCount);
+      els.viewerCount.textContent = value.toLocaleString();
+      els.chartViewersValue.textContent = value.toLocaleString();
+      state.currentViewer = value;
+    }
+
+    function connectWebSocket(chatroomId) {
+      return new Promise((resolve, reject) => {
+        state.socket = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=8.0.1&flash=false");
+
+        state.socket.onopen = () => {
+          state.socket.send(JSON.stringify({
+            event: "pusher:subscribe",
+            data: { auth: "", channel: "chatrooms." + chatroomId + ".v2" }
+          }));
+        };
+
+        state.socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.event === "pusher_internal:subscription_succeeded") {
+              resolve();
+            }
+            if (data.event === "App\\Events\\ChatMessageEvent") {
+              const payload = JSON.parse(data.data);
+              onChatMessage(payload);
+            }
+          } catch (err) {
+            console.error("Socket parse error", err);
+          }
+        };
+
+        state.socket.onerror = () => reject(new Error("WebSocket error"));
+        state.socket.onclose = () => {
+          if (state.isConnected) {
+            setStatus("Disconnected", "Offline", "error");
+            state.isConnected = false;
+            setButtonState(false);
+          }
+        };
+
+        setTimeout(() => reject(new Error("WebSocket timeout")), 12000);
+      });
+    }
+
+    function onChatMessage(msg) {
+      const now = Date.now();
+      const username = msg?.sender?.username || "anon";
+      const color = msg?.sender?.identity?.color || "#59f3a2";
+      const content = msg?.content || "";
+
+      state.events.push({ ts: now, user: username });
+      state.totalMessages += 1;
+      state.uniqueUsers.add(username);
+      state.userCounts[username] = (state.userCounts[username] || 0) + 1;
+      state.lastMessageTime = now;
+      const messageEntry = {
+        ts: new Date(now).toISOString(),
+        channel: state.channelName || "manual",
+        username,
+        message: content
+      };
+      state.messageLog.push(messageEntry);
+      recordSession({
+        type: "message",
+        ts: messageEntry.ts,
+        channel: messageEntry.channel,
+        username,
+        message: content
+      });
+
+      addChatLine(username, content, color);
+    }
+
+    function addChatLine(username, content, color) {
+      if (els.chatContainer.querySelector(".helper")) {
+        els.chatContainer.innerHTML = "";
+      }
+
+      const row = document.createElement("div");
+      row.className = "chat-line";
+      row.innerHTML =
+        '<div class="avatar" style="background:' + color + '">' + sanitize(username.slice(0, 1).toUpperCase()) +
+        '</div><div><div class="chat-meta"><span class="chat-user" style="color:' + color + '">' +
+        sanitize(username) + '</span><span>' + new Date().toLocaleTimeString() +
+        '</span></div><div>' + sanitize(content) + '</div></div>';
+
+      els.chatContainer.appendChild(row);
+      while (els.chatContainer.children.length > state.maxChatLines) {
+        els.chatContainer.removeChild(els.chatContainer.firstChild);
+      }
+      els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
+    }
+
+    function updateAnalytics() {
+      const now = Date.now();
+      state.events = state.events.filter((evt) => evt.ts > now - 60000);
+
+      const perMinute = state.events.length;
+      const perSecond = state.events.filter((evt) => evt.ts > now - 1000).length;
+
+      const uniqueMinute = new Set(state.events.map((evt) => evt.user)).size;
+      const uniqueSecond = new Set(state.events.filter((evt) => evt.ts > now - 1000).map((evt) => evt.user)).size;
+
+      els.messagesPerMinute.textContent = perMinute.toLocaleString();
+      els.messagesPerSecond.textContent = perSecond.toFixed(1);
+      els.uniquePerMinute.textContent = uniqueMinute.toLocaleString();
+      els.uniquePerSecond.textContent = uniqueSecond.toLocaleString();
+      els.uniqueTotal.textContent = state.uniqueUsers.size.toLocaleString();
+      els.totalMessages.textContent = state.totalMessages.toLocaleString();
+      updateTopChatters();
+
+      if (state.isConnected) {
+        if (state.durationSeconds && state.startTime && (now - state.startTime) / 1000 >= state.durationSeconds) {
+          disconnect({ keepStatus: true });
+          setStatus("Reached duration limit", "Stopped", "error");
+          return;
+        }
+        if (state.inactivitySeconds && state.lastMessageTime && (now - state.lastMessageTime) / 1000 >= state.inactivitySeconds) {
+          disconnect({ keepStatus: true });
+          setStatus("Stopped after inactivity", "Stopped", "error");
+          return;
+        }
+      }
+
+      if (state.isConnected && state.screenshot.onSnapshot) {
+        captureOnce();
+      }
+
+      pushSeries("messages", perMinute);
+      pushSeries("unique", uniqueMinute);
+      pushSeries("viewers", state.currentViewer ?? 0);
+      updateChartsFromSeries();
+
+      els.chartMessagesValue.textContent = perMinute.toLocaleString();
+      els.chartUniqueValue.textContent = uniqueMinute.toLocaleString();
+      if (state.currentViewer === null) {
+        els.chartViewersValue.textContent = "Unavailable";
+      } else {
+        els.chartViewersValue.textContent = state.currentViewer.toLocaleString();
+      }
+
+      const snap = {
+        ts: new Date().toISOString(),
+        channel: state.channelName || "manual",
+        messagesPerMinute: perMinute,
+        messagesPerSecond: perSecond,
+        uniquePerMinute: uniqueMinute,
+        uniquePerSecond: uniqueSecond,
+        totalMessages: state.totalMessages,
+        uniqueTotal: state.uniqueUsers.size,
+        viewerCount: state.currentViewer,
+        screenshotPath: state.screenshot.latestDataUrl || null,
+        screenshotBase64: state.screenshot.embed ? state.screenshot.latestBase64 : null
+      };
+      state.snapshots.push(snap);
+      if (state.snapshots.length > state.maxSnapshotLength) state.snapshots.shift();
+
+      if (state.isConnected) {
+        recordSession({
+          type: "snapshot",
+          ts: snap.ts,
+          channel: snap.channel,
+          messages_per_minute: perMinute,
+          messages_per_second: perSecond,
+          unique_per_minute: uniqueMinute,
+          unique_per_second: uniqueSecond,
+          total_messages: state.totalMessages,
+          unique_total: state.uniqueUsers.size,
+          viewer_count: state.currentViewer,
+          screenshot_path: snap.screenshotPath,
+          screenshot_base64: snap.screenshotBase64
+        });
+      }
+    }
+
+    async function connect() {
+      const channel = els.channelInput.value.trim().toLowerCase();
+      if (!channel && !els.manualChatroom.value.trim()) {
+        setStatus("Enter a channel or chatroom id", "Input", "error");
+        return;
+      }
+
+      const duration = parsePositiveInt(els.durationInput.value.trim());
+      const inactivity = parsePositiveInt(els.inactivityInput.value.trim());
+      const screenshotInterval = parsePositiveInt(els.screenshotIntervalInput.value.trim());
+      const screenshotOnSnapshot = els.screenshotOnSnapshot.value === "on";
+      const screenshotMax = parsePositiveInt(els.screenshotMaxInput.value.trim());
+      const screenshotFormat = els.screenshotFormatSelect.value || "jpg";
+      const screenshotEmbed = els.screenshotEmbedSelect.value === "on";
+      const screenshotEmbedWidth = parsePositiveInt(els.screenshotEmbedWidth.value.trim()) || 160;
+      const streamUrlInput = els.streamUrlInput.value.trim();
+
+      if (screenshotInterval && screenshotOnSnapshot) {
+        setStatus("Use either screenshot interval or on-snapshot", "Input", "error");
+        return;
+      }
+      if (screenshotEmbedWidth <= 0) {
+        setStatus("Screenshot embed width must be positive", "Input", "error");
+        return;
+      }
+
+      setButtonState(true);
+      setStatus("Resolving channel...", "Working", "");
+
+      try {
+        const proxyBase = els.proxyInput.value.trim();
+        const info = await fetchChannelInfo(channel, proxyBase);
+        if (!info.chatroomId) throw new Error("Chatroom id not found");
+
+        state.chatroomId = info.chatroomId;
+        state.channelName = channel || "manual";
+        updateViewerCount(info.viewerCount);
+        state.startTime = Date.now();
+        state.lastMessageTime = state.startTime;
+        state.durationSeconds = duration;
+        state.inactivitySeconds = inactivity;
+        state.screenshot.interval = screenshotInterval;
+        state.screenshot.onSnapshot = screenshotOnSnapshot;
+        state.screenshot.max = screenshotMax;
+        state.screenshot.format = screenshotFormat;
+        state.screenshot.embed = screenshotEmbed;
+        state.screenshot.embedWidth = screenshotEmbedWidth;
+        state.screenshot.streamUrl = streamUrlInput || info.streamUrl || "";
+
+        if ((screenshotInterval || screenshotOnSnapshot) && !state.screenshot.streamUrl) {
+          throw new Error("Screenshot enabled but stream URL is missing");
+        }
+        if ((screenshotInterval || screenshotOnSnapshot) && !startScreenshotCapture()) {
+          throw new Error("Stream URL not playable for screenshots");
+        }
+
+        setStatus("Connecting to chat...", "Working", "");
+        await connectWebSocket(state.chatroomId);
+
+        state.isConnected = true;
+        recordSession({
+          type: "session_start",
+          ts: new Date().toISOString(),
+          channel: state.channelName || "manual",
+          chatroom_id: state.chatroomId
+        });
+        setStatus("Connected to " + state.channelName, "Live", "connected");
+        setButtonState(false);
+        startViewerPoll(channel, proxyBase);
+      } catch (err) {
+        setStatus(err.message, "Error", "error");
+        setButtonState(false);
+      }
+    }
+
+    function disconnect(options) {
+      const opts = options || {};
+      if (state.socket) state.socket.close();
+      if (state.viewerInterval) clearInterval(state.viewerInterval);
+      stopScreenshotCapture();
+      state.socket = null;
+      state.isConnected = false;
+      setButtonState(false);
+      if (!opts.keepStatus) {
+        setStatus("Disconnected", "Offline", "error");
+      }
+    }
+
+    els.connectBtn.addEventListener("click", () => {
+      if (state.isConnected) disconnect();
+      else connect();
+    });
+
+    els.windowSelect.addEventListener("change", (event) => {
+      const value = event.target.value;
+      if (value === "all") {
+        setChartWindow("all");
+        return;
+      }
+      const seconds = Number(value);
+      if (Number.isFinite(seconds)) setChartWindow(seconds);
+    });
+
+    els.clearBtn.addEventListener("click", () => {
+      state.events = [];
+      state.totalMessages = 0;
+      state.uniqueUsers = new Set();
+      state.userCounts = {};
+      state.series = { messages: [], unique: [], viewers: [] };
+      state.snapshots = [];
+      state.messageLog = [];
+      state.sessionLog = [];
+      state.currentViewer = null;
+      state.startTime = null;
+      state.lastMessageTime = null;
+      state.screenshot.latestDataUrl = null;
+      state.screenshot.latestBase64 = null;
+      state.screenshot.history = [];
+
+      els.messagesPerMinute.textContent = "0";
+      els.messagesPerSecond.textContent = "0.0";
+      els.uniquePerMinute.textContent = "0";
+      els.uniquePerSecond.textContent = "0";
+      els.uniqueTotal.textContent = "0";
+      els.totalMessages.textContent = "0";
+      els.topChatters.textContent = "n/a";
+      els.viewerCount.textContent = "Unavailable";
+      els.chartMessagesValue.textContent = "0";
+      els.chartUniqueValue.textContent = "0";
+      els.chartViewersValue.textContent = "Unavailable";
+      updateScreenshotUI();
+
+      els.chatContainer.innerHTML = '<div class="helper">Messages will appear here once connected.</div>';
+      updateChartsFromSeries();
+      setStatus("Session cleared", "Cleared", "");
+    });
+
+    els.exportBtn.addEventListener("click", () => {
+      if (!state.snapshots.length) {
+        setStatus("No session data to export yet", "Empty", "error");
+        return;
+      }
+      const header = [
+        "timestamp",
+        "channel",
+        "messages_per_minute",
+        "messages_per_second",
+        "unique_per_minute",
+        "unique_per_second",
+        "total_messages",
+        "unique_total",
+        "viewer_count",
+        "screenshot_path"
+      ];
+      const rows = state.snapshots.map((snap) => [
+        csvEscape(snap.ts),
+        csvEscape(snap.channel),
+        csvEscape(snap.messagesPerMinute),
+        csvEscape(snap.messagesPerSecond),
+        csvEscape(snap.uniquePerMinute),
+        csvEscape(snap.uniquePerSecond),
+        csvEscape(snap.totalMessages),
+        csvEscape(snap.uniqueTotal),
+        csvEscape(snap.viewerCount === null ? "" : snap.viewerCount),
+        csvEscape(snap.screenshotPath || "")
+      ]);
+      const csv = "\uFEFF" + [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = (state.channelName || "session").replace(/[^a-z0-9-_]/gi, "_");
+      link.href = url;
+      link.download = "kick-session-" + safeName + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("CSV exported", "Exported", "connected");
+    });
+
+    els.exportMessagesBtn.addEventListener("click", () => {
+      if (!state.messageLog.length) {
+        setStatus("No messages to export yet", "Empty", "error");
+        return;
+      }
+      const header = ["timestamp", "channel", "username", "message"];
+      const rows = state.messageLog.map((entry) => [
+        csvEscape(entry.ts),
+        csvEscape(entry.channel),
+        csvEscape(entry.username),
+        csvEscape(entry.message)
+      ]);
+      const csv = "\uFEFF" + [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = (state.channelName || "messages").replace(/[^a-z0-9-_]/gi, "_");
+      link.href = url;
+      link.download = "kick-messages-" + safeName + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("Messages CSV exported", "Exported", "connected");
+    });
+
+    els.exportJsonlBtn.addEventListener("click", () => {
+      if (!state.sessionLog.length) {
+        setStatus("No session data to export yet", "Empty", "error");
+        return;
+      }
+      const jsonl = state.sessionLog.map((entry) => JSON.stringify(entry)).join("\n");
+      const blob = new Blob([jsonl], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = (state.channelName || "session").replace(/[^a-z0-9-_]/gi, "_");
+      link.href = url;
+      link.download = "kick-session-" + safeName + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".jsonl";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setStatus("JSONL exported", "Exported", "connected");
+    });
+
+    els.downloadScreenshotBtn.addEventListener("click", () => {
+      if (!state.screenshot.latestDataUrl) return;
+      const link = document.createElement("a");
+      const safeName = (state.channelName || "screenshot").replace(/[^a-z0-9-_]/gi, "_");
+      link.href = state.screenshot.latestDataUrl;
+      link.download = "kick-screenshot-" + safeName + "-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + (state.screenshot.format || "jpg");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+
+    setupCharts();
+    setChartWindow(60);
+    updateTopChatters();
+    updateScreenshotUI();
+    setInterval(updateAnalytics, 1000);
+    window.addEventListener("resize", () => updateChartsFromSeries());
+  </script>
+</body>
+</html>
