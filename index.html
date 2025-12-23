@@ -574,7 +574,9 @@
       sessionLog: [],
       currentViewer: null,
       chartWindowSeconds: 60,
-      maxSeriesLength: 3600,
+      // Keep enough historical points so the "All stream" window can show more than 1 hour
+      // of data without clamping the arrays to the 3600s limit used for the 1h window.
+      maxSeriesLength: 20000,
       maxSnapshotLength: 7200,
       maxSessionLogLength: 20000,
       viewerInterval: null,
