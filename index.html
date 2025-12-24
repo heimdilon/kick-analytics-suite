@@ -301,19 +301,105 @@
 
     .chart-card button { margin-top: 8px; }
 
-    .screenshot-preview {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 14, 20, 0.5);
-    }
-
     .top-list {
       font-size: 14px;
       line-height: 1.4;
       color: var(--text);
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .heat-strip {
+      display: grid;
+      grid-template-columns: repeat(30, 1fr);
+      gap: 4px;
+      min-height: 110px;
+    }
+
+    .heat-cell {
+      height: 12px;
+      border-radius: 4px;
+      background: rgba(89, 243, 162, 0.08);
+      transition: background 0.2s ease;
+    }
+
+    .ticker {
+      background: rgba(10, 14, 20, 0.55);
+      border-radius: 12px;
+      padding: 12px 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .ticker-track {
+      display: inline-block;
+      white-space: nowrap;
+      animation: ticker-scroll var(--ticker-duration, 20s) linear infinite;
+    }
+
+    .ticker-track.paused {
+      animation: none;
+    }
+
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bar-item {
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .bar-track {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(89, 243, 162, 0.95), rgba(79, 209, 197, 0.85));
+    }
+
+    .emote-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .emote-card {
+      background: rgba(10, 14, 20, 0.55);
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: grid;
+      gap: 2px;
+    }
+
+    .emote-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .sparkline {
+      height: 140px;
+      border-radius: 12px;
+      background: rgba(10, 14, 20, 0.5);
     }
 
     @media (max-width: 720px) {
@@ -369,47 +455,7 @@
           <label for="inactivityInput">Stop after inactivity (sec)</label>
           <input id="inactivityInput" type="number" min="1" placeholder="e.g. 300" />
         </div>
-        <div>
-          <label for="streamUrlInput">Stream URL (m3u8)</label>
-          <input id="streamUrlInput" placeholder="https://...m3u8" autocomplete="off" />
-        </div>
-        <div>
-          <label for="screenshotIntervalInput">Screenshot interval (sec)</label>
-          <input id="screenshotIntervalInput" type="number" min="1" placeholder="e.g. 30" />
-        </div>
-        <div>
-          <label for="screenshotOnSnapshot">Screenshot on each snapshot</label>
-          <select id="screenshotOnSnapshot">
-            <option value="off">Off</option>
-            <option value="on">On</option>
-          </select>
-        </div>
-        <div>
-          <label for="screenshotMaxInput">Max screenshots to keep</label>
-          <input id="screenshotMaxInput" type="number" min="1" placeholder="e.g. 100" />
-        </div>
-        <div>
-          <label for="screenshotFormatSelect">Screenshot format</label>
-          <select id="screenshotFormatSelect">
-            <option value="jpg">JPG</option>
-            <option value="png">PNG</option>
-          </select>
-        </div>
-        <div>
-          <label for="screenshotEmbedSelect">Embed thumbnail in JSONL</label>
-          <select id="screenshotEmbedSelect">
-            <option value="off">Off</option>
-            <option value="on">On</option>
-          </select>
-        </div>
-        <div>
-          <label for="screenshotEmbedWidth">Embed width (px)</label>
-          <input id="screenshotEmbedWidth" type="number" min="1" placeholder="160" />
-        </div>
       </div>
-      <p class="helper" id="screenshotHelp">
-        Screenshots need a playable m3u8 stream URL and browser HLS support; CORS can block capture.
-      </p>
       <div class="action-row">
         <button id="clearBtn" class="ghost">Clear Data</button>
         <button id="exportBtn" class="ghost">Export Session CSV</button>
@@ -459,7 +505,23 @@
         <div class="value" id="totalMessages">0</div>
       </div>
       <div class="card">
-        <strong>Top Chatters</strong>
+        <strong>Total Emotes</strong>
+        <div class="value" id="totalEmotes">0</div>
+      </div>
+      <div class="card">
+        <strong>Emoji Rate</strong>
+        <div class="value" id="emojiRate">0%</div>
+      </div>
+      <div class="card">
+        <strong>Peak Messages / Minute</strong>
+        <div class="value" id="peakMessagesPerMinute">0</div>
+      </div>
+      <div class="card">
+        <strong>Spam Intensity (1m)</strong>
+        <div class="value" id="spamRate">0%</div>
+      </div>
+      <div class="card">
+        <strong>Top Chatters (Share)</strong>
         <div class="value small top-list" id="topChatters">n/a</div>
       </div>
     </section>
@@ -489,14 +551,38 @@
         </div>
         <canvas id="chartViewers"></canvas>
       </div>
-      <div class="chart-card">
-        <div class="chart-title">Latest Screenshot</div>
-        <div class="chart-meta">
-          <span class="chart-value" id="screenshotCount">0</span>
-          <span id="screenshotStatus">Off</span>
+    </section>
+
+    <section class="chart-grid" style="margin-top:18px;">
+      <div class="chart-card wide">
+        <div class="chart-title">Message Ticker (Last 10)</div>
+        <div class="ticker">
+          <div id="messageTicker" class="ticker-track">Waiting for messages...</div>
         </div>
-        <img id="screenshotPreview" class="screenshot-preview" alt="Latest screenshot" />
-        <button id="downloadScreenshotBtn" class="ghost" disabled>Download Screenshot</button>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Message Heat (60m)</div>
+        <div class="chart-meta">
+          <span class="chart-value" id="heatMax">0</span>
+          <span>per minute peak</span>
+        </div>
+        <div id="heatStrip" class="heat-strip"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Live Pulse</div>
+        <div class="chart-meta">
+          <span class="chart-value">MPM vs Unique</span>
+          <span>Last 2 min</span>
+        </div>
+        <canvas id="pulseSparkline" class="sparkline"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Chatters Share</div>
+        <div id="topChattersBars" class="bar-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Emotes</div>
+        <div id="emoteGrid" class="emote-grid"></div>
       </div>
     </section>
 
@@ -508,10 +594,6 @@
     </section>
   </div>
 
-  <video id="streamVideo" style="display:none;" muted playsinline></video>
-  <canvas id="captureCanvas" style="display:none;"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
   <script>
     const els = {
       channelInput: document.getElementById("channelInput"),
@@ -535,6 +617,10 @@
       uniquePerSecond: document.getElementById("uniquePerSecond"),
       uniqueTotal: document.getElementById("uniqueTotal"),
       totalMessages: document.getElementById("totalMessages"),
+      totalEmotes: document.getElementById("totalEmotes"),
+      emojiRate: document.getElementById("emojiRate"),
+      peakMessagesPerMinute: document.getElementById("peakMessagesPerMinute"),
+      spamRate: document.getElementById("spamRate"),
       topChatters: document.getElementById("topChatters"),
       chatContainer: document.getElementById("chatContainer"),
       chartMessages: document.getElementById("chartMessages"),
@@ -546,22 +632,14 @@
       chartMessagesWindow: document.getElementById("chartMessagesWindow"),
       chartUniqueWindow: document.getElementById("chartUniqueWindow"),
       chartViewersWindow: document.getElementById("chartViewersWindow"),
+      messageTicker: document.getElementById("messageTicker"),
+      heatStrip: document.getElementById("heatStrip"),
+      heatMax: document.getElementById("heatMax"),
+      pulseSparkline: document.getElementById("pulseSparkline"),
+      topChattersBars: document.getElementById("topChattersBars"),
+      emoteGrid: document.getElementById("emoteGrid"),
       durationInput: document.getElementById("durationInput"),
-      inactivityInput: document.getElementById("inactivityInput"),
-      streamUrlInput: document.getElementById("streamUrlInput"),
-      screenshotIntervalInput: document.getElementById("screenshotIntervalInput"),
-      screenshotOnSnapshot: document.getElementById("screenshotOnSnapshot"),
-      screenshotMaxInput: document.getElementById("screenshotMaxInput"),
-      screenshotFormatSelect: document.getElementById("screenshotFormatSelect"),
-      screenshotEmbedSelect: document.getElementById("screenshotEmbedSelect"),
-      screenshotEmbedWidth: document.getElementById("screenshotEmbedWidth"),
-      screenshotPreview: document.getElementById("screenshotPreview"),
-      screenshotCount: document.getElementById("screenshotCount"),
-      screenshotStatus: document.getElementById("screenshotStatus"),
-      screenshotHelp: document.getElementById("screenshotHelp"),
-      downloadScreenshotBtn: document.getElementById("downloadScreenshotBtn"),
-      streamVideo: document.getElementById("streamVideo"),
-      captureCanvas: document.getElementById("captureCanvas")
+      inactivityInput: document.getElementById("inactivityInput")
     };
 
     const state = {
@@ -570,6 +648,13 @@
       channelName: "",
       chatroomId: null,
       totalMessages: 0,
+      totalEmotes: 0,
+      messagesWithEmoji: 0,
+      peakMessagesPerMinute: 0,
+      minuteBuckets: [],
+      currentMinuteStart: null,
+      tickerMessages: [],
+      emoteCounts: {},
       uniqueUsers: new Set(),
       userCounts: {},
       events: [],
@@ -590,22 +675,7 @@
       startTime: null,
       lastMessageTime: null,
       durationSeconds: null,
-      inactivitySeconds: null,
-      screenshot: {
-        interval: null,
-        onSnapshot: false,
-        max: null,
-        format: "jpg",
-        embed: false,
-        embedWidth: 160,
-        streamUrl: "",
-        hls: null,
-        timer: null,
-        latestDataUrl: null,
-        latestBase64: null,
-        history: [],
-        inProgress: false
-      }
+      inactivitySeconds: null
     };
 
     function setStatus(text, tag, mode) {
@@ -646,6 +716,146 @@
       return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
     }
 
+    function formatPercent(value) {
+      if (!Number.isFinite(value)) return "0%";
+      return (value * 100).toFixed(1) + "%";
+    }
+
+    const emojiRegex = (() => {
+      try {
+        return new RegExp("\\p{Extended_Pictographic}", "u");
+      } catch (err) {
+        return /[\u203C-\u3299\uD83C-\uDBFF\uDC00-\uDFFF]/;
+      }
+    })();
+
+    function containsEmoji(text) {
+      if (!text) return false;
+      return emojiRegex.test(text);
+    }
+
+    function initHeatStrip() {
+      if (!els.heatStrip) return;
+      els.heatStrip.innerHTML = "";
+      for (let i = 0; i < 60; i += 1) {
+        const cell = document.createElement("div");
+        cell.className = "heat-cell";
+        els.heatStrip.appendChild(cell);
+      }
+    }
+
+    function ensureMinuteBuckets(now) {
+      const minuteStart = Math.floor(now / 60000) * 60000;
+      if (state.currentMinuteStart === null) {
+        state.currentMinuteStart = minuteStart;
+        state.minuteBuckets = Array(60).fill(0);
+        return;
+      }
+      if (minuteStart === state.currentMinuteStart) return;
+      const diffMinutes = Math.min(60, Math.floor((minuteStart - state.currentMinuteStart) / 60000));
+      for (let i = 0; i < diffMinutes; i += 1) {
+        state.minuteBuckets.push(0);
+        if (state.minuteBuckets.length > 60) state.minuteBuckets.shift();
+      }
+      state.currentMinuteStart = minuteStart;
+    }
+
+    function updateHeatStrip() {
+      if (!els.heatStrip || !els.heatStrip.children.length) return;
+      const max = Math.max(1, ...state.minuteBuckets);
+      els.heatMax.textContent = max.toLocaleString();
+      [...els.heatStrip.children].forEach((cell, idx) => {
+        const value = state.minuteBuckets[idx] || 0;
+        const intensity = value / max;
+        const alpha = 0.12 + intensity * 0.7;
+        cell.style.background = "rgba(89, 243, 162, " + alpha.toFixed(3) + ")";
+      });
+    }
+
+    function updateTicker() {
+      if (!els.messageTicker) return;
+      if (!state.tickerMessages.length) {
+        els.messageTicker.textContent = "Waiting for messages...";
+        els.messageTicker.classList.add("paused");
+        return;
+      }
+      const text = state.tickerMessages.join("  •  ");
+      els.messageTicker.textContent = text + "  •  " + text;
+      const base = Math.max(14, Math.min(40, Math.ceil(text.length / 6)));
+      els.messageTicker.style.setProperty("--ticker-duration", base + "s");
+      if (text.length < 50) {
+        els.messageTicker.classList.add("paused");
+      } else {
+        els.messageTicker.classList.remove("paused");
+      }
+    }
+
+    function updateTopChattersBars(topEntries) {
+      if (!els.topChattersBars) return;
+      if (!topEntries.length) {
+        els.topChattersBars.innerHTML = "<div class=\"helper\">No activity yet.</div>";
+        return;
+      }
+      const max = Math.max(...topEntries.map((item) => item.share));
+      els.topChattersBars.innerHTML = topEntries.map((entry) => {
+        const width = max > 0 ? Math.max(8, Math.round((entry.share / max) * 100)) : 0;
+        return (
+          "<div class=\"bar-item\">" +
+            "<div>" + sanitize(entry.name) + " · " + formatPercent(entry.share) + "</div>" +
+            "<div class=\"bar-track\"><div class=\"bar-fill\" style=\"width:" + width + "%\"></div></div>" +
+          "</div>"
+        );
+      }).join("");
+    }
+
+    function updateEmoteGrid() {
+      if (!els.emoteGrid) return;
+      const entries = Object.entries(state.emoteCounts);
+      if (!entries.length) {
+        els.emoteGrid.innerHTML = "<div class=\"helper\">No emotes yet.</div>";
+        return;
+      }
+      entries.sort((a, b) => b[1] - a[1]);
+      const top = entries.slice(0, 8);
+      els.emoteGrid.innerHTML = top.map(([name, count]) => (
+        "<div class=\"emote-card\"><div class=\"emote-name\">" + sanitize(name) +
+        "</div><div>" + count.toLocaleString() + " uses</div></div>"
+      )).join("");
+    }
+
+    function drawSparkline() {
+      const canvas = els.pulseSparkline;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = rect.width * ratio;
+      canvas.height = rect.height * ratio;
+      ctx.scale(ratio, ratio);
+
+      const messages = state.series.messages.slice(-120);
+      const unique = state.series.unique.slice(-120);
+      const max = Math.max(1, ...messages, ...unique);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const drawLine = (data, color) => {
+        if (!data.length) return;
+        ctx.beginPath();
+        data.forEach((value, index) => {
+          const x = (index / (data.length - 1 || 1)) * rect.width;
+          const y = rect.height - (value / max) * (rect.height - 12) - 6;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      };
+
+      drawLine(messages, "rgba(89, 243, 162, 0.9)");
+      drawLine(unique, "rgba(79, 209, 197, 0.9)");
+    }
+
     function recordSession(entry) {
       state.sessionLog.push(entry);
       if (state.sessionLog.length > state.maxSessionLogLength) {
@@ -657,142 +867,19 @@
       const entries = Object.entries(state.userCounts);
       if (!entries.length) {
         els.topChatters.textContent = "n/a";
+        updateTopChattersBars([]);
         return;
       }
       entries.sort((a, b) => b[1] - a[1]);
-      const top = entries.slice(0, 3).map(([name, count]) => name + " (" + count + ")");
-      els.topChatters.textContent = top.join(", ");
-    }
-
-    function updateScreenshotUI() {
-      if (state.screenshot.latestDataUrl) {
-        els.screenshotPreview.src = state.screenshot.latestDataUrl;
-        els.screenshotPreview.style.display = "block";
-        els.downloadScreenshotBtn.disabled = false;
-      } else {
-        els.screenshotPreview.removeAttribute("src");
-        els.screenshotPreview.style.display = "none";
-        els.downloadScreenshotBtn.disabled = true;
-      }
-      els.screenshotCount.textContent = String(state.screenshot.history.length);
-      if (state.screenshot.interval) {
-        els.screenshotStatus.textContent = "Every " + state.screenshot.interval + "s";
-      } else if (state.screenshot.onSnapshot) {
-        els.screenshotStatus.textContent = "On snapshot";
-      } else {
-        els.screenshotStatus.textContent = "Off";
-      }
-    }
-
-    function setScreenshotHelp(message) {
-      els.screenshotHelp.textContent = message || "";
-    }
-
-    function stopScreenshotCapture() {
-      if (state.screenshot.timer) clearInterval(state.screenshot.timer);
-      state.screenshot.timer = null;
-      if (state.screenshot.hls) {
-        state.screenshot.hls.destroy();
-        state.screenshot.hls = null;
-      }
-      if (els.streamVideo) {
-        els.streamVideo.pause();
-        els.streamVideo.removeAttribute("src");
-        els.streamVideo.load();
-      }
-    }
-
-    function setupStreamPlayback(streamUrl) {
-      const video = els.streamVideo;
-      if (!video || !streamUrl) return false;
-      if (state.screenshot.hls) {
-        state.screenshot.hls.destroy();
-        state.screenshot.hls = null;
-      }
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.playsInline = true;
-      if (window.Hls && Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true });
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
-        state.screenshot.hls = hls;
-      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = streamUrl;
-      } else {
-        setScreenshotHelp("HLS is not supported in this browser. Try Chrome/Edge or provide a native HLS source.");
-        return false;
-      }
-      setScreenshotHelp("");
-      video.play().catch(() => {});
-      return true;
-    }
-
-    function captureOnce() {
-      if (state.screenshot.inProgress) return;
-      const video = els.streamVideo;
-      if (!video || video.readyState < 2) return;
-      state.screenshot.inProgress = true;
-      try {
-        const canvas = els.captureCanvas;
-        const ctx = canvas.getContext("2d");
-        const sourceWidth = video.videoWidth || 1280;
-        const sourceHeight = video.videoHeight || 720;
-        const targetHeight = 480;
-        const scale = targetHeight / sourceHeight;
-        const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
-        const mime = state.screenshot.format === "png" ? "image/png" : "image/jpeg";
-        const dataUrl = canvas.toDataURL(mime, 0.85);
-        state.screenshot.latestDataUrl = dataUrl;
-        state.screenshot.history.push(dataUrl);
-        if (state.screenshot.max && state.screenshot.history.length > state.screenshot.max) {
-          state.screenshot.history.shift();
-        }
-
-        if (state.screenshot.embed) {
-          const embedCanvas = document.createElement("canvas");
-          const embedWidth = state.screenshot.embedWidth || 160;
-          const embedScale = embedWidth / sourceWidth;
-          const embedHeight = Math.max(1, Math.round(sourceHeight * embedScale));
-          embedCanvas.width = embedWidth;
-          embedCanvas.height = embedHeight;
-          const embedCtx = embedCanvas.getContext("2d");
-          embedCtx.drawImage(video, 0, 0, embedWidth, embedHeight);
-          const embedData = embedCanvas.toDataURL(mime, 0.85);
-          state.screenshot.latestBase64 = embedData.split(",")[1] || null;
-        } else {
-          state.screenshot.latestBase64 = null;
-        }
-        updateScreenshotUI();
-      } catch (err) {
-        setStatus("Screenshot blocked by CORS", "Error", "error");
-        setScreenshotHelp("Capture blocked by CORS. Try a proxy or a different stream URL.");
-      } finally {
-        state.screenshot.inProgress = false;
-      }
-    }
-
-    function startScreenshotCapture() {
-      stopScreenshotCapture();
-      if (!state.screenshot.interval && !state.screenshot.onSnapshot) {
-        updateScreenshotUI();
-        return true;
-      }
-      const ok = setupStreamPlayback(state.screenshot.streamUrl);
-      if (!ok) {
-        if (!els.screenshotHelp.textContent) {
-          setScreenshotHelp("Stream URL not playable for screenshots.");
-        }
-        return false;
-      }
-      if (state.screenshot.interval) {
-        state.screenshot.timer = setInterval(captureOnce, state.screenshot.interval * 1000);
-      }
-      updateScreenshotUI();
-      return true;
+      const topEntries = entries.slice(0, 5).map(([name, count]) => {
+        const share = state.totalMessages > 0 ? count / state.totalMessages : 0;
+        return { name, count, share };
+      });
+      const topText = topEntries.map((entry) => (
+        entry.name + " (" + entry.count + ", " + formatPercent(entry.share) + ")"
+      ));
+      els.topChatters.textContent = topText.join(", ");
+      updateTopChattersBars(topEntries);
     }
 
     function createChart(canvas, color) {
@@ -996,11 +1083,28 @@
       const color = msg?.sender?.identity?.color || "#59f3a2";
       const content = msg?.content || "";
 
+      const emoteMatches = content.match(/\[emote:[^\]]+\]/g) || [];
+      state.totalEmotes += emoteMatches.length;
+      const emoteRegex = /\[emote:\d+:([^\]]+)\]/g;
+      let emoteMatch = emoteRegex.exec(content);
+      while (emoteMatch) {
+        const name = emoteMatch[1];
+        state.emoteCounts[name] = (state.emoteCounts[name] || 0) + 1;
+        emoteMatch = emoteRegex.exec(content);
+      }
+      const hasEmoji = emoteMatches.length > 0 || containsEmoji(content);
+      if (hasEmoji) state.messagesWithEmoji += 1;
+      ensureMinuteBuckets(now);
+      if (state.minuteBuckets.length) {
+        state.minuteBuckets[state.minuteBuckets.length - 1] += 1;
+      }
       state.events.push({ ts: now, user: username });
       state.totalMessages += 1;
       state.uniqueUsers.add(username);
       state.userCounts[username] = (state.userCounts[username] || 0) + 1;
       state.lastMessageTime = now;
+      state.tickerMessages.push(username + ": " + content);
+      if (state.tickerMessages.length > 10) state.tickerMessages.shift();
       const messageEntry = {
         ts: new Date(now).toISOString(),
         channel: state.channelName || "manual",
@@ -1041,6 +1145,7 @@
 
     function updateAnalytics() {
       const now = Date.now();
+      ensureMinuteBuckets(now);
       state.events = state.events.filter((evt) => evt.ts > now - 60000);
 
       const perMinute = state.events.length;
@@ -1050,6 +1155,18 @@
       const uniqueSecond = new Set(state.events.filter((evt) => evt.ts > now - 1000).map((evt) => evt.user)).size;
       const viewerToUniqueRatio =
         state.currentViewer !== null && uniqueMinute > 0 ? Number((state.currentViewer / uniqueMinute).toFixed(3)) : null;
+      if (perMinute > state.peakMessagesPerMinute) state.peakMessagesPerMinute = perMinute;
+      let spamCount = 0;
+      const lastSeenByUser = {};
+      for (const evt of state.events) {
+        const lastSeen = lastSeenByUser[evt.user];
+        if (lastSeen && evt.ts - lastSeen <= 5000) {
+          spamCount += 1;
+        }
+        lastSeenByUser[evt.user] = evt.ts;
+      }
+      const spamRate = perMinute > 0 ? spamCount / perMinute : 0;
+      const emojiRate = state.totalMessages > 0 ? state.messagesWithEmoji / state.totalMessages : 0;
 
       els.messagesPerMinute.textContent = perMinute.toLocaleString();
       els.messagesPerSecond.textContent = perSecond.toFixed(1);
@@ -1058,7 +1175,14 @@
       els.uniquePerSecond.textContent = uniqueSecond.toLocaleString();
       els.uniqueTotal.textContent = state.uniqueUsers.size.toLocaleString();
       els.totalMessages.textContent = state.totalMessages.toLocaleString();
+      els.totalEmotes.textContent = state.totalEmotes.toLocaleString();
+      els.emojiRate.textContent = formatPercent(emojiRate);
+      els.peakMessagesPerMinute.textContent = state.peakMessagesPerMinute.toLocaleString();
+      els.spamRate.textContent = formatPercent(spamRate);
       updateTopChatters();
+      updateHeatStrip();
+      updateTicker();
+      updateEmoteGrid();
 
       if (state.isConnected) {
         if (state.durationSeconds && state.startTime && (now - state.startTime) / 1000 >= state.durationSeconds) {
@@ -1073,14 +1197,11 @@
         }
       }
 
-      if (state.isConnected && state.screenshot.onSnapshot) {
-        captureOnce();
-      }
-
       pushSeries("messages", perMinute);
       pushSeries("unique", uniqueMinute);
       pushSeries("viewers", state.currentViewer ?? 0);
       updateChartsFromSeries();
+      drawSparkline();
 
       els.chartMessagesValue.textContent = perMinute.toLocaleString();
       els.chartUniqueValue.textContent = uniqueMinute.toLocaleString();
@@ -1100,9 +1221,11 @@
         viewerToUniqueRatio,
         totalMessages: state.totalMessages,
         uniqueTotal: state.uniqueUsers.size,
-        viewerCount: state.currentViewer,
-        screenshotPath: state.screenshot.latestDataUrl || null,
-        screenshotBase64: state.screenshot.embed ? state.screenshot.latestBase64 : null
+        totalEmotes: state.totalEmotes,
+        emojiRate,
+        peakMessagesPerMinute: state.peakMessagesPerMinute,
+        spamRate,
+        viewerCount: state.currentViewer
       };
       state.snapshots.push(snap);
       if (state.snapshots.length > state.maxSnapshotLength) state.snapshots.shift();
@@ -1119,9 +1242,11 @@
           viewer_to_unique_ratio: viewerToUniqueRatio,
           total_messages: state.totalMessages,
           unique_total: state.uniqueUsers.size,
-          viewer_count: state.currentViewer,
-          screenshot_path: snap.screenshotPath,
-          screenshot_base64: snap.screenshotBase64
+          total_emotes: state.totalEmotes,
+          emoji_rate: emojiRate,
+          peak_messages_per_minute: state.peakMessagesPerMinute,
+          spam_rate: spamRate,
+          viewer_count: state.currentViewer
         });
       }
     }
@@ -1135,23 +1260,6 @@
 
       const duration = parsePositiveInt(els.durationInput.value.trim());
       const inactivity = parsePositiveInt(els.inactivityInput.value.trim());
-      const screenshotInterval = parsePositiveInt(els.screenshotIntervalInput.value.trim());
-      const screenshotOnSnapshot = els.screenshotOnSnapshot.value === "on";
-      const screenshotMax = parsePositiveInt(els.screenshotMaxInput.value.trim());
-      const screenshotFormat = els.screenshotFormatSelect.value || "jpg";
-      const screenshotEmbed = els.screenshotEmbedSelect.value === "on";
-      const screenshotEmbedWidth = parsePositiveInt(els.screenshotEmbedWidth.value.trim()) || 160;
-      const streamUrlInput = els.streamUrlInput.value.trim();
-
-      if (screenshotInterval && screenshotOnSnapshot) {
-        setStatus("Use either screenshot interval or on-snapshot", "Input", "error");
-        return;
-      }
-      if (screenshotEmbedWidth <= 0) {
-        setStatus("Screenshot embed width must be positive", "Input", "error");
-        return;
-      }
-
       setButtonState(true);
       setStatus("Resolving channel...", "Working", "");
 
@@ -1167,20 +1275,6 @@
         state.lastMessageTime = state.startTime;
         state.durationSeconds = duration;
         state.inactivitySeconds = inactivity;
-        state.screenshot.interval = screenshotInterval;
-        state.screenshot.onSnapshot = screenshotOnSnapshot;
-        state.screenshot.max = screenshotMax;
-        state.screenshot.format = screenshotFormat;
-        state.screenshot.embed = screenshotEmbed;
-        state.screenshot.embedWidth = screenshotEmbedWidth;
-        state.screenshot.streamUrl = streamUrlInput || info.streamUrl || "";
-
-        if ((screenshotInterval || screenshotOnSnapshot) && !state.screenshot.streamUrl) {
-          throw new Error("Screenshot enabled but stream URL is missing");
-        }
-        if ((screenshotInterval || screenshotOnSnapshot) && !startScreenshotCapture()) {
-          throw new Error("Stream URL not playable for screenshots");
-        }
 
         setStatus("Connecting to chat...", "Working", "");
         await connectWebSocket(state.chatroomId);
@@ -1205,7 +1299,6 @@
       const opts = options || {};
       if (state.socket) state.socket.close();
       if (state.viewerInterval) clearInterval(state.viewerInterval);
-      stopScreenshotCapture();
       state.socket = null;
       state.isConnected = false;
       setButtonState(false);
@@ -1232,6 +1325,13 @@
     els.clearBtn.addEventListener("click", () => {
       state.events = [];
       state.totalMessages = 0;
+      state.totalEmotes = 0;
+      state.messagesWithEmoji = 0;
+      state.peakMessagesPerMinute = 0;
+      state.minuteBuckets = Array(60).fill(0);
+      state.currentMinuteStart = Math.floor(Date.now() / 60000) * 60000;
+      state.tickerMessages = [];
+      state.emoteCounts = {};
       state.uniqueUsers = new Set();
       state.userCounts = {};
       state.series = { messages: [], unique: [], viewers: [] };
@@ -1241,9 +1341,6 @@
       state.currentViewer = null;
       state.startTime = null;
       state.lastMessageTime = null;
-      state.screenshot.latestDataUrl = null;
-      state.screenshot.latestBase64 = null;
-      state.screenshot.history = [];
 
       els.messagesPerMinute.textContent = "0";
       els.messagesPerSecond.textContent = "0.0";
@@ -1252,12 +1349,20 @@
       els.uniquePerSecond.textContent = "0";
       els.uniqueTotal.textContent = "0";
       els.totalMessages.textContent = "0";
+      els.totalEmotes.textContent = "0";
+      els.emojiRate.textContent = "0%";
+      els.peakMessagesPerMinute.textContent = "0";
+      els.spamRate.textContent = "0%";
       els.topChatters.textContent = "n/a";
+      updateTopChattersBars([]);
+      updateTicker();
+      updateEmoteGrid();
+      updateHeatStrip();
+      drawSparkline();
       els.viewerCount.textContent = "Unavailable";
       els.chartMessagesValue.textContent = "0";
       els.chartUniqueValue.textContent = "0";
       els.chartViewersValue.textContent = "Unavailable";
-      updateScreenshotUI();
 
       els.chatContainer.innerHTML = '<div class="helper">Messages will appear here once connected.</div>';
       updateChartsFromSeries();
@@ -1279,8 +1384,11 @@
         "viewer_to_unique_ratio",
         "total_messages",
         "unique_total",
-        "viewer_count",
-        "screenshot_path"
+        "total_emotes",
+        "emoji_rate",
+        "peak_messages_per_minute",
+        "spam_rate",
+        "viewer_count"
       ];
       const rows = state.snapshots.map((snap) => [
         csvEscape(snap.ts),
@@ -1292,8 +1400,11 @@
         csvEscape(snap.viewerToUniqueRatio === null ? "" : snap.viewerToUniqueRatio),
         csvEscape(snap.totalMessages),
         csvEscape(snap.uniqueTotal),
-        csvEscape(snap.viewerCount === null ? "" : snap.viewerCount),
-        csvEscape(snap.screenshotPath || "")
+        csvEscape(snap.totalEmotes),
+        csvEscape(snap.emojiRate),
+        csvEscape(snap.peakMessagesPerMinute),
+        csvEscape(snap.spamRate),
+        csvEscape(snap.viewerCount === null ? "" : snap.viewerCount)
       ]);
       const csv = "\uFEFF" + [header.join(","), ...rows.map((r) => r.join(","))].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -1354,23 +1465,19 @@
       setStatus("JSONL exported", "Exported", "connected");
     });
 
-    els.downloadScreenshotBtn.addEventListener("click", () => {
-      if (!state.screenshot.latestDataUrl) return;
-      const link = document.createElement("a");
-      const safeName = (state.channelName || "screenshot").replace(/[^a-z0-9-_]/gi, "_");
-      link.href = state.screenshot.latestDataUrl;
-      link.download = "kick-screenshot-" + safeName + "-" + new Date().toISOString().replace(/[:.]/g, "-") + "." + (state.screenshot.format || "jpg");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    });
-
     setupCharts();
+    initHeatStrip();
+    ensureMinuteBuckets(Date.now());
+    updateHeatStrip();
     setChartWindow(60);
     updateTopChatters();
-    updateScreenshotUI();
+    updateTicker();
+    updateEmoteGrid();
     setInterval(updateAnalytics, 1000);
-    window.addEventListener("resize", () => updateChartsFromSeries());
+    window.addEventListener("resize", () => {
+      updateChartsFromSeries();
+      drawSparkline();
+    });
   </script>
 </body>
 </html>
