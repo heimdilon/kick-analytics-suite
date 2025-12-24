@@ -443,6 +443,10 @@
         <div class="value" id="uniquePerMinute">0</div>
       </div>
       <div class="card">
+        <strong>Viewers / Unique Chatter (1m)</strong>
+        <div class="value" id="viewersPerUnique">Unavailable</div>
+      </div>
+      <div class="card">
         <strong>Unique Chatters / Second</strong>
         <div class="value" id="uniquePerSecond">0</div>
       </div>
@@ -527,6 +531,7 @@
       messagesPerMinute: document.getElementById("messagesPerMinute"),
       messagesPerSecond: document.getElementById("messagesPerSecond"),
       uniquePerMinute: document.getElementById("uniquePerMinute"),
+      viewersPerUnique: document.getElementById("viewersPerUnique"),
       uniquePerSecond: document.getElementById("uniquePerSecond"),
       uniqueTotal: document.getElementById("uniqueTotal"),
       totalMessages: document.getElementById("totalMessages"),
@@ -634,6 +639,11 @@
       const num = Number(value);
       if (!Number.isFinite(num) || num <= 0) return null;
       return Math.floor(num);
+    }
+
+    function formatRatio(value) {
+      if (value === null || value === undefined || !Number.isFinite(value)) return "N/A";
+      return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
     }
 
     function recordSession(entry) {
@@ -1038,10 +1048,13 @@
 
       const uniqueMinute = new Set(state.events.map((evt) => evt.user)).size;
       const uniqueSecond = new Set(state.events.filter((evt) => evt.ts > now - 1000).map((evt) => evt.user)).size;
+      const viewerToUniqueRatio =
+        state.currentViewer !== null && uniqueMinute > 0 ? Number((state.currentViewer / uniqueMinute).toFixed(3)) : null;
 
       els.messagesPerMinute.textContent = perMinute.toLocaleString();
       els.messagesPerSecond.textContent = perSecond.toFixed(1);
       els.uniquePerMinute.textContent = uniqueMinute.toLocaleString();
+      els.viewersPerUnique.textContent = viewerToUniqueRatio === null ? "N/A" : formatRatio(viewerToUniqueRatio);
       els.uniquePerSecond.textContent = uniqueSecond.toLocaleString();
       els.uniqueTotal.textContent = state.uniqueUsers.size.toLocaleString();
       els.totalMessages.textContent = state.totalMessages.toLocaleString();
@@ -1084,6 +1097,7 @@
         messagesPerSecond: perSecond,
         uniquePerMinute: uniqueMinute,
         uniquePerSecond: uniqueSecond,
+        viewerToUniqueRatio,
         totalMessages: state.totalMessages,
         uniqueTotal: state.uniqueUsers.size,
         viewerCount: state.currentViewer,
@@ -1102,6 +1116,7 @@
           messages_per_second: perSecond,
           unique_per_minute: uniqueMinute,
           unique_per_second: uniqueSecond,
+          viewer_to_unique_ratio: viewerToUniqueRatio,
           total_messages: state.totalMessages,
           unique_total: state.uniqueUsers.size,
           viewer_count: state.currentViewer,
@@ -1233,6 +1248,7 @@
       els.messagesPerMinute.textContent = "0";
       els.messagesPerSecond.textContent = "0.0";
       els.uniquePerMinute.textContent = "0";
+      els.viewersPerUnique.textContent = "Unavailable";
       els.uniquePerSecond.textContent = "0";
       els.uniqueTotal.textContent = "0";
       els.totalMessages.textContent = "0";
@@ -1260,6 +1276,7 @@
         "messages_per_second",
         "unique_per_minute",
         "unique_per_second",
+        "viewer_to_unique_ratio",
         "total_messages",
         "unique_total",
         "viewer_count",
@@ -1272,6 +1289,7 @@
         csvEscape(snap.messagesPerSecond),
         csvEscape(snap.uniquePerMinute),
         csvEscape(snap.uniquePerSecond),
+        csvEscape(snap.viewerToUniqueRatio === null ? "" : snap.viewerToUniqueRatio),
         csvEscape(snap.totalMessages),
         csvEscape(snap.uniqueTotal),
         csvEscape(snap.viewerCount === null ? "" : snap.viewerCount),
